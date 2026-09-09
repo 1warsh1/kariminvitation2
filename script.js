@@ -151,35 +151,24 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 5. RSVP & WISHES FEED WITH LOCALSTORAGE PERSISTENCE
+  // 5. RSVP & WISHES FEED WITH PERSISTENT DATABASE INTEGRATION
   const rsvpForm = document.getElementById('rsvp-form');
   const wishesWall = document.getElementById('wishes-wall');
   const statHadir = document.getElementById('stat-count-hadir');
   const statTidak = document.getElementById('stat-count-tidak');
 
-  const defaultWishes = [
-    {
-      name: "Honored Guest",
-      status: "Attending",
-      wishes: "Barakallahu lakuma wa baraka 'alaikuma wa jama'a bainakuma fii khair. Heartfelt congratulations to Karim Gharba!",
-      time: "Just now"
+  const formatTime = (timeStr) => {
+    if (!timeStr || timeStr === 'Just now' || timeStr === 'Baru saja') return 'Just now';
+    try {
+      const date = new Date(timeStr);
+      if (isNaN(date.getTime())) return timeStr;
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return timeStr;
     }
-  ];
-
-  const getSavedWishes = () => {
-    const saved = localStorage.getItem('wedding_wishes_karim');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return defaultWishes;
-      }
-    }
-    return defaultWishes;
   };
 
-  const renderWishes = () => {
-    const wishes = getSavedWishes();
+  const renderWishesData = (wishes) => {
     let countHadir = 0;
     let countTidak = 0;
 
@@ -202,13 +191,31 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="wish-badge ${badgeClass}">${badgeText}</span>
         </div>
         <p class="wish-text">${escapeHtml(item.wishes)}</p>
-        <span class="wish-time"><i class="fa-regular fa-clock"></i> ${escapeHtml(item.time || 'Just now')}</span>
+        <span class="wish-time"><i class="fa-regular fa-clock"></i> ${escapeHtml(formatTime(item.time))}</span>
       `;
       wishesWall.appendChild(wishEl);
     });
 
     if (statHadir) statHadir.textContent = countHadir;
     if (statTidak) statTidak.textContent = countTidak;
+  };
+
+  const fetchWishesFromDb = () => {
+    fetch('/api/wishes')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          renderWishesData(data);
+          localStorage.setItem('wedding_wishes_karim', JSON.stringify(data));
+        }
+      })
+      .catch(err => {
+        console.log("Using cached offline wishes:", err);
+        const cached = localStorage.getItem('wedding_wishes_karim');
+        if (cached) {
+          try { renderWishesData(JSON.parse(cached)); } catch (e) {}
+        }
+      });
   };
 
   const escapeHtml = (str) => {
@@ -227,25 +234,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!nameInput || !statusInput || !wishesInput) return;
 
-      const newWish = {
+      const payload = {
         name: nameInput,
         status: statusInput,
-        wishes: wishesInput,
-        time: 'Just now'
+        wishes: wishesInput
       };
 
-      const currentWishes = getSavedWishes();
-      currentWishes.unshift(newWish);
-      localStorage.setItem('wedding_wishes_karim', JSON.stringify(currentWishes));
-
-      renderWishes();
-      showToast('Wishes & attendance confirmation sent successfully!');
+      fetch('/api/wishes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(res => res.json())
+        .then(resData => {
+          if (resData.success && Array.isArray(resData.wishes)) {
+            renderWishesData(resData.wishes);
+            localStorage.setItem('wedding_wishes_karim', JSON.stringify(resData.wishes));
+          } else {
+            fetchWishesFromDb();
+          }
+          showToast('Wishes & attendance saved to database!');
+        })
+        .catch(err => {
+          console.error("Database save fallback:", err);
+          const newWish = {
+            name: nameInput,
+            status: statusInput,
+            wishes: wishesInput,
+            time: new Date().toISOString()
+          };
+          const cached = JSON.parse(localStorage.getItem('wedding_wishes_karim') || '[]');
+          cached.unshift(newWish);
+          localStorage.setItem('wedding_wishes_karim', JSON.stringify(cached));
+          renderWishesData(cached);
+          showToast('Wishes & attendance saved!');
+        });
 
       document.getElementById('guest-wishes').value = '';
     });
   }
 
-  renderWishes();
+  fetchWishesFromDb();
+  // Auto-refresh wishes every 10 seconds so comments from any user appear live
+  setInterval(fetchWishesFromDb, 10000);
 
   // 6. SCROLL TO TOP INDICATOR
   const scrollIndicator = document.getElementById('floatingScrollIndicator');
