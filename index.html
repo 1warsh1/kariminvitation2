@@ -421,8 +421,9 @@
                   placeholder="Write your warm wishes and prayers..." required></textarea>
               </div>
 
-              <button type="submit" class="btn-submit-rsvp">
-                <i class="fa-regular fa-paper-plane"></i> Send Wishes
+              <button type="submit" class="btn-submit-rsvp" id="btn-submit-rsvp">
+                <span class="btn-text"><i class="fa-regular fa-paper-plane"></i> Send Wishes</span>
+                <span class="btn-loading" style="display: none;"><i class="fa-solid fa-spinner fa-spin"></i> Sending...</span>
               </button>
             </form>
           </div>
@@ -431,7 +432,7 @@
           <div>
             <div class="rsvp-stats-row">
               <div class="stat-badge">
-                <span class="stat-num" id="stat-count-hadir">1</span>
+                <span class="stat-num" id="stat-count-hadir">0</span>
                 <span class="stat-lbl">Attending</span>
               </div>
               <div class="stat-badge">
@@ -441,7 +442,7 @@
             </div>
 
             <div class="wishes-wall" id="wishes-wall">
-              <!-- Dynamically rendered wishes -->
+              <!-- Dynamically rendered wishes from Cloud Database -->
             </div>
           </div>
         </div>
@@ -453,7 +454,7 @@
 
   <!-- ================= TOAST NOTIFICATION ================= -->
   <div class="toast-notification" id="toast-notif">
-    <i class="fa-solid fa-circle-check" style="color: var(--gold-primary);"></i>
+    <i class="fa-solid fa-circle-check" id="toast-icon" style="color: var(--gold-primary);"></i>
     <span id="toast-text">Successfully copied!</span>
   </div>
 
@@ -461,6 +462,10 @@
   <a href="#" id="floatingScrollIndicator" title="Back to Top">
     <i class="fa-solid fa-chevron-up"></i>
   </a>
+
+  <!-- Firebase Cloud Database SDK (v10 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <!-- Custom Script -->
   <script src="script.js"></script>

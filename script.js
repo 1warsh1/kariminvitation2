@@ -1,9 +1,19 @@
 /* ==========================================================================
    LUXURY WEDDING INVITATION INTERACTIVE SCRIPT - KARIM GHARBA
+   Features:
+   - Dynamic URL Guest Personalization
+   - Cover Gate & Audio Player with Autoplay Policy Handling
+   - Realtime Countdown Timer to 26 September 2026
+   - 1-Click Copy to Clipboard & Toast Notifications
+   - Realtime Cloud Database (Firebase Realtime Database) for Wishes & RSVP
+   - Anti-XSS Sanitization & Loading State Handling
    ========================================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. URL QUERY PARAMETERS PARSER (SUPPORT PUBLIC & PERSONALIZED MODES)
+
+  // ==========================================================================
+  // 1. URL QUERY PARAMETERS PARSER (PERSONALIZED & PUBLIC MODES)
+  // ==========================================================================
   const parseUrlParams = () => {
     const urlParams = new URLSearchParams(window.location.search);
     
@@ -45,7 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   parseUrlParams();
 
-  // 2. COVER OVERLAY & AUDIO AUTOPLAY
+  // ==========================================================================
+  // 2. COVER OVERLAY & AUDIO AUTOPLAY CONTROLLER
+  // ==========================================================================
   const coverModal = document.getElementById('cover-modal');
   const btnOpen = document.getElementById('btn-open-invitation');
   const bgMusic = document.getElementById('bg-music');
@@ -60,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (musicToggleBtn) musicToggleBtn.classList.add('playing');
         if (musicIcon) musicIcon.className = 'fa-solid fa-music';
       }).catch(err => {
-        console.log("Audio autoplay restricted:", err);
+        console.log("Audio autoplay restricted by browser policy:", err);
       });
     }
   };
@@ -91,18 +103,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 3. COUNTDOWN TIMER
+  // ==========================================================================
+  // 3. COUNTDOWN TIMER TO 26 SEPTEMBER 2026, 19:00 WIB
+  // ==========================================================================
   const targetDate = new Date('2026-09-26T19:00:00+07:00').getTime();
 
   const updateCountdown = () => {
     const now = new Date().getTime();
     const distance = targetDate - now;
 
+    const daysEl = document.getElementById('days');
+    const hoursEl = document.getElementById('hours');
+    const minutesEl = document.getElementById('minutes');
+    const secondsEl = document.getElementById('seconds');
+
     if (distance < 0) {
-      document.getElementById('days').textContent = '00';
-      document.getElementById('hours').textContent = '00';
-      document.getElementById('minutes').textContent = '00';
-      document.getElementById('seconds').textContent = '00';
+      if (daysEl) daysEl.textContent = '00';
+      if (hoursEl) hoursEl.textContent = '00';
+      if (minutesEl) minutesEl.textContent = '00';
+      if (secondsEl) secondsEl.textContent = '00';
       return;
     }
 
@@ -110,11 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-    const daysEl = document.getElementById('days');
-    const hoursEl = document.getElementById('hours');
-    const minutesEl = document.getElementById('minutes');
-    const secondsEl = document.getElementById('seconds');
 
     if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
     if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
@@ -125,18 +139,30 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCountdown();
   setInterval(updateCountdown, 1000);
 
-  // 4. COPY TO CLIPBOARD TOAST NOTIFICATION
+  // ==========================================================================
+  // 4. TOAST NOTIFICATION & COPY TO CLIPBOARD
+  // ==========================================================================
   const btnCopyBca = document.getElementById('btn-copy-bca');
   const toastNotif = document.getElementById('toast-notif');
   const toastText = document.getElementById('toast-text');
+  const toastIcon = document.getElementById('toast-icon');
 
-  const showToast = (message) => {
+  const showToast = (message, type = 'success') => {
     if (toastNotif && toastText) {
       toastText.textContent = message;
+      if (toastIcon) {
+        if (type === 'error') {
+          toastIcon.className = 'fa-solid fa-circle-exclamation';
+          toastIcon.style.color = '#fc8181';
+        } else {
+          toastIcon.className = 'fa-solid fa-circle-check';
+          toastIcon.style.color = 'var(--gold-primary)';
+        }
+      }
       toastNotif.classList.add('show');
       setTimeout(() => {
         toastNotif.classList.remove('show');
-      }, 3000);
+      }, 3500);
     }
   };
 
@@ -144,18 +170,69 @@ document.addEventListener("DOMContentLoaded", () => {
     btnCopyBca.addEventListener('click', () => {
       const acctNum = btnCopyBca.getAttribute('data-account') || '7180411857';
       navigator.clipboard.writeText(acctNum).then(() => {
-        showToast('Account number successfully copied!');
+        showToast('Account number successfully copied!', 'success');
       }).catch(() => {
-        showToast('Failed to copy account number.');
+        showToast('Failed to copy account number.', 'error');
       });
     });
   }
 
-  // 5. RSVP & WISHES FEED WITH PERSISTENT DATABASE INTEGRATION
+  // ==========================================================================
+  // 5. CLOUD DATABASE (FIREBASE REALTIME DATABASE) INTEGRATION
+  // ==========================================================================
+  
+  /**
+   * FIREBASE CONFIGURATION
+   * To use your own Firebase project:
+   * 1. Go to Firebase Console (https://console.firebase.google.com/)
+   * 2. Create/select a project, create Realtime Database
+   * 3. Set rules: { "rules": { "wishes": { ".read": true, ".write": true } } }
+   * 4. Paste your project credentials below:
+   */
+  const firebaseConfig = {
+    apiKey: "AIzaSyAkFoIu29DNUnLxF9q1gwbmgJMDErAxnoE",
+    authDomain: "kariminvitation-48553.firebaseapp.com",
+    databaseURL: "https://kariminvitation-48553-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "kariminvitation-48553",
+    storageBucket: "kariminvitation-48553.firebasestorage.app",
+    messagingSenderId: "668946095869",
+    appId: "1:668946095869:web:7a3ddb821dbbcfac796894",
+    measurementId: "G-T0GVKRR3K8"
+  };
+
+  let db = null;
+  let isFirebaseReady = false;
+
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps || !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      db = firebase.database();
+      isFirebaseReady = true;
+      console.log("Firebase Realtime Database initialized successfully.");
+    } else {
+      console.warn("Firebase SDK script not detected.");
+    }
+  } catch (err) {
+    console.warn("Firebase initialization error:", err);
+  }
+
   const rsvpForm = document.getElementById('rsvp-form');
+  const btnSubmitRsvp = document.getElementById('btn-submit-rsvp');
+  const btnText = btnSubmitRsvp ? btnSubmitRsvp.querySelector('.btn-text') : null;
+  const btnLoading = btnSubmitRsvp ? btnSubmitRsvp.querySelector('.btn-loading') : null;
   const wishesWall = document.getElementById('wishes-wall');
   const statHadir = document.getElementById('stat-count-hadir');
   const statTidak = document.getElementById('stat-count-tidak');
+
+  // Anti-XSS Sanitizer
+  const escapeHtml = (str) => {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, (m) => {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  };
 
   const formatTime = (timeStr) => {
     if (!timeStr || timeStr === 'Just now' || timeStr === 'Baru saja') return 'Just now';
@@ -174,6 +251,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!wishesWall) return;
     wishesWall.innerHTML = '';
+
+    if (!wishes || wishes.length === 0) {
+      wishesWall.innerHTML = `
+        <div style="text-align: center; padding: 25px 15px; color: var(--text-muted); font-size: 0.95rem;">
+          <i class="fa-regular fa-comments" style="font-size: 1.8rem; color: var(--gold-primary); margin-bottom: 8px; display: block;"></i>
+          Be the first to send warm wishes & prayers!
+        </div>
+      `;
+      if (statHadir) statHadir.textContent = '0';
+      if (statTidak) statTidak.textContent = '0';
+      return;
+    }
 
     wishes.forEach(item => {
       const isHadir = item.status === 'Attending' || item.status === 'Hadir';
@@ -196,43 +285,65 @@ document.addEventListener("DOMContentLoaded", () => {
       wishesWall.appendChild(wishEl);
     });
 
-    if (statHadir) statHadir.textContent = countHadir;
-    if (statTidak) statTidak.textContent = countTidak;
+    if (statHadir) statHadir.textContent = String(countHadir);
+    if (statTidak) statTidak.textContent = String(countTidak);
   };
 
-  const getApiUrl = (endpoint) => {
-    if (window.location.protocol.startsWith('http')) {
-      return endpoint;
+  const setSubmittingState = (isSubmitting) => {
+    if (btnSubmitRsvp) {
+      btnSubmitRsvp.disabled = isSubmitting;
     }
-    return 'http://192.168.0.197:8080' + endpoint;
+    if (btnText && btnLoading) {
+      btnText.style.display = isSubmitting ? 'none' : 'inline-block';
+      btnLoading.style.display = isSubmitting ? 'inline-block' : 'none';
+    }
   };
 
-  const fetchWishesFromDb = () => {
-    fetch(getApiUrl('/api/wishes'))
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          renderWishesData(data);
-          localStorage.setItem('wedding_wishes_karim', JSON.stringify(data));
+  // Real-time Database Listener
+  const listenToCloudWishes = () => {
+    if (!isFirebaseReady || !db) {
+      console.warn("Cloud Database not active. Using initial demo feed.");
+      renderWishesData([
+        {
+          name: "Honored Guest",
+          status: "Attending",
+          wishes: "Barakallahu lakuma wa baraka 'alaikuma wa jama'a bainakuma fii khair. Heartfelt congratulations to Karim Gharba!",
+          time: new Date().toISOString()
         }
-      })
-      .catch(err => {
-        console.log("Using cached offline wishes:", err);
-        const cached = localStorage.getItem('wedding_wishes_karim');
-        if (cached) {
-          try { renderWishesData(JSON.parse(cached)); } catch (e) {}
-        }
-      });
-  };
+      ]);
+      return;
+    }
 
-  const escapeHtml = (str) => {
-    return String(str).replace(/[&<>"']/g, (m) => {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    const wishesRef = db.ref('wishes');
+    wishesRef.on('value', (snapshot) => {
+      const data = snapshot.val();
+      const wishesList = [];
+      if (data) {
+        Object.keys(data).forEach(key => {
+          wishesList.push({
+            id: key,
+            ...data[key]
+          });
+        });
+        // Sort newest first (descending by timestamp or time)
+        wishesList.sort((a, b) => {
+          const timeA = a.createdAt || (new Date(a.time).getTime()) || 0;
+          const timeB = b.createdAt || (new Date(b.time).getTime()) || 0;
+          return timeB - timeA;
+        });
+      }
+      renderWishesData(wishesList);
+    }, (error) => {
+      console.error("Firebase read listener error:", error);
+      showToast('Could not sync wishes from cloud database.', 'error');
     });
   };
 
+  listenToCloudWishes();
+
+  // Form Submit Handler
   if (rsvpForm) {
-    rsvpForm.addEventListener('submit', (e) => {
+    rsvpForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const nameInput = document.getElementById('guest-name').value.trim();
@@ -241,54 +352,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!nameInput || !statusInput || !wishesInput) return;
 
+      if (!isFirebaseReady || !db) {
+        showToast('Please set your Firebase Database credentials in script.js.', 'error');
+        return;
+      }
+
+      setSubmittingState(true);
+
+      const now = new Date();
       const payload = {
         name: nameInput,
         status: statusInput,
-        wishes: wishesInput
+        wishes: wishesInput,
+        time: now.toISOString(),
+        createdAt: Date.now()
       };
 
-      fetch(getApiUrl('/api/wishes'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('HTTP status ' + res.status);
-          return res.json();
-        })
-        .then(resData => {
-          if (resData.success && Array.isArray(resData.wishes)) {
-            renderWishesData(resData.wishes);
-            localStorage.setItem('wedding_wishes_karim', JSON.stringify(resData.wishes));
-          } else {
-            fetchWishesFromDb();
-          }
-          showToast('Wishes & attendance saved to database!');
-          document.getElementById('guest-wishes').value = '';
-        })
-        .catch(err => {
-          console.error("Database save fallback:", err);
-          const newWish = {
-            name: nameInput,
-            status: statusInput,
-            wishes: wishesInput,
-            time: new Date().toISOString()
-          };
-          const cached = JSON.parse(localStorage.getItem('wedding_wishes_karim') || '[]');
-          cached.unshift(newWish);
-          localStorage.setItem('wedding_wishes_karim', JSON.stringify(cached));
-          renderWishesData(cached);
-          showToast('Wishes & attendance saved!');
-          document.getElementById('guest-wishes').value = '';
-        });
+      try {
+        const wishesRef = db.ref('wishes');
+        await wishesRef.push(payload);
+
+        showToast('Thank you! Your wishes & RSVP have been saved.', 'success');
+        document.getElementById('guest-wishes').value = '';
+      } catch (err) {
+        console.error("Firebase write error:", err);
+        showToast('Failed to save to cloud database: ' + (err.message || 'Connection error'), 'error');
+      } finally {
+        setSubmittingState(false);
+      }
     });
   }
 
-  fetchWishesFromDb();
-  // Auto-refresh wishes every 10 seconds so comments from any user appear live
-  setInterval(fetchWishesFromDb, 10000);
-
-  // 6. SCROLL TO TOP INDICATOR
+  // ==========================================================================
+  // 6. FLOATING SCROLL TO TOP INDICATOR
+  // ==========================================================================
   const scrollIndicator = document.getElementById('floatingScrollIndicator');
   window.addEventListener('scroll', () => {
     if (scrollIndicator) {

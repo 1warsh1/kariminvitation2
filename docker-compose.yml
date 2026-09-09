@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  karim-invitation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: karim-wedding-invitation
+    restart: always
+    ports:
+      - "80:80"

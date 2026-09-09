@@ -1,0 +1,10 @@
+.git
+.gitignore
+.agents
+server.js
+wishes.json
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+nginx.conf
