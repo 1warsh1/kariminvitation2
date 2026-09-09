@@ -122,7 +122,10 @@ const server = http.createServer((req, res) => {
         res.end('500 Internal Server Error');
       }
     } else {
-      res.writeHead(200, { 'Content-Type': contentType });
+      res.writeHead(200, { 
+        'Content-Type': contentType,
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+      });
       res.end(content);
     }
   });

@@ -104,9 +104,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==========================================================================
-  // 3. COUNTDOWN TIMER TO 26 SEPTEMBER 2026, 19:00 WIB
+  // 3. COUNTDOWN TIMER TO 26 SEPTEMBER 2026, 22:00 EGYPT TIME
   // ==========================================================================
-  const targetDate = new Date('2026-09-26T19:00:00+07:00').getTime();
+  const targetDate = new Date('2026-09-26T22:00:00+03:00').getTime();
 
   const updateCountdown = () => {
     const now = new Date().getTime();
