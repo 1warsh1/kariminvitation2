@@ -129,6 +129,6 @@ const server = http.createServer((req, res) => {
 });
 
 initDb();
-server.listen(PORT, () => {
-  console.log(`Server with persistent wishes database active on http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server with persistent wishes database active on http://localhost:${PORT} and http://192.168.0.197:${PORT}`);
 });

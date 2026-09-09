@@ -200,8 +200,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (statTidak) statTidak.textContent = countTidak;
   };
 
+  const getApiUrl = (endpoint) => {
+    if (window.location.protocol.startsWith('http')) {
+      return endpoint;
+    }
+    return 'http://192.168.0.197:8080' + endpoint;
+  };
+
   const fetchWishesFromDb = () => {
-    fetch('/api/wishes')
+    fetch(getApiUrl('/api/wishes'))
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -240,12 +247,15 @@ document.addEventListener("DOMContentLoaded", () => {
         wishes: wishesInput
       };
 
-      fetch('/api/wishes', {
+      fetch(getApiUrl('/api/wishes'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('HTTP status ' + res.status);
+          return res.json();
+        })
         .then(resData => {
           if (resData.success && Array.isArray(resData.wishes)) {
             renderWishesData(resData.wishes);
@@ -254,6 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
             fetchWishesFromDb();
           }
           showToast('Wishes & attendance saved to database!');
+          document.getElementById('guest-wishes').value = '';
         })
         .catch(err => {
           console.error("Database save fallback:", err);
@@ -268,9 +279,8 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem('wedding_wishes_karim', JSON.stringify(cached));
           renderWishesData(cached);
           showToast('Wishes & attendance saved!');
+          document.getElementById('guest-wishes').value = '';
         });
-
-      document.getElementById('guest-wishes').value = '';
     });
   }
 
